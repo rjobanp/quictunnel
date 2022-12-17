@@ -3,7 +3,7 @@ from typing import Optional
 
 from structlog import get_logger
 
-from .session import Session
+from quictunnel_server.session import Session
 
 logger = get_logger()
 
@@ -49,9 +49,10 @@ class SessionManager:
         async with self._session_lock:
             if session.host in self._sessions:
                 popped_session = self._sessions.pop(session.host)
-                if not session is popped_session:
+                if session is not popped_session:
                     logger.error(
-                        "Asked to clean up session that doesn't match session for same host in session map",
+                        "Asked to clean up session that doesn't match session"
+                        " for same host in session map",
                         host=session.host,
                     )
             else:
@@ -60,4 +61,4 @@ class SessionManager:
                     host=session.host,
                 )
 
-            await session.close()
+        await session.close()

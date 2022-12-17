@@ -1,10 +1,10 @@
-import asyncio
 import argparse
+import asyncio
 
 import uvicorn
 
-from .proxy_app import make_proxy_app
-from .manager import SessionManager
+from quictunnel_server.manager import SessionManager
+from quictunnel_server.proxy_app import make_proxy_app
 
 
 async def main() -> None:

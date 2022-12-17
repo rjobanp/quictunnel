@@ -1,14 +1,14 @@
 import datetime
 import traceback
 
-from starlette.types import Receive, Scope, Send, ASGIApp
-from starlette.requests import Request, HTTPConnection
-from starlette.responses import Response
-from starlette.websockets import WebSocket
-from starlette import status
 import structlog
+from starlette import status
+from starlette.requests import HTTPConnection, Request
+from starlette.responses import Response
+from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.websockets import WebSocket
 
-from .manager import SessionManager, Session
+from quictunnel_server.manager import Session, SessionManager
 
 logger = structlog.get_logger()
 
@@ -69,7 +69,7 @@ async def http_handler(manager: SessionManager, request: Request):
             status_code=err.code,
             headers={"Content-Type": "text/plain"},
         )
-    except:
+    except BaseException:
         logger.error(
             "Returning unhandled error response",
             trace=traceback.format_exc(),
@@ -94,7 +94,7 @@ async def websocket_handler(manager: SessionManager, websocket: WebSocket) -> No
         await websocket.close()
     except RequestError as err:
         logger.error(
-            "Returning error response",
+            "Closing websocket due to error",
             code=err.code,
             content=err.message,
             client_addr=websocket.client,
@@ -102,7 +102,14 @@ async def websocket_handler(manager: SessionManager, websocket: WebSocket) -> No
             conn_type="websocket",
         )
         await websocket.close(code=err.code, reason=err.message)
-    except:
+    except BaseException:
+        logger.error(
+            "Closing websocket due to unhandled error",
+            trace=traceback.format_exc(),
+            client_addr=websocket.client,
+            url=websocket.url,
+            conn_type="websocket",
+        )
         await websocket.close(code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -116,7 +123,7 @@ def make_proxy_app(manager: SessionManager) -> ASGIApp:
         """
         ASGI interface using Starlette as a toolkit
         """
-        # TODO: implement this
+        # TODO: implement the lifespan handler
         if scope["type"] == "lifespan":
             return None
 

@@ -16,7 +16,21 @@ structlog = "^22.3.0"
 [tool.poetry.group.dev.dependencies]
 flake8 = "^5.0.4"
 black = "^22.10.0"
+pytest = "^7.2.0"
+pytest-asyncio = "^0.20.3"
+isort = "^5.11.4"
+mypy = "^0.991"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+# Set up pytest-asyncio to automatically detect async tests & fixtures
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.black]
+preview = true
+line_length = 88
