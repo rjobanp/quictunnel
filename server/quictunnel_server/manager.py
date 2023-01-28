@@ -12,12 +12,16 @@ def sanitize_host(host: str):
     return host.strip().lower()
 
 
+class DuplicateSessionError(Exception):
+    pass
+
+
 class SessionManager:
     """
-    Manage all tunnel sessions for this app
+    Manage all active tunnel sessions for this app
 
-    Each session is keyed by its "host" which indicates the host-header
-    that incoming requests will be matched against
+    Each session is keyed by its "host" which indicates the http
+    host-header that incoming requests will be matched against
     """
 
     def __init__(self) -> None:
@@ -28,19 +32,19 @@ class SessionManager:
         """
         Retrieve a session by its designated host header lookup key
         """
-        # TODO(roshan): Do we need to use the session_lock here?
         return self._sessions.get(sanitize_host(host))
 
-    async def new_session(self, host: str) -> Session:
+    async def register_session_host(self, http_host: str, session: Session):
         """
-        Create and return a new session for the given host if one does
-        not already exist. Returns existing if found.
+        Register a new session for the given http host header
+
+        If a session already exists for this host throw an error
         """
-        host = sanitize_host(host)
+        host = sanitize_host(http_host)
         async with self._session_lock:
-            if host not in self._sessions:
-                self._sessions[host] = Session(host=host)
-            return self.session_by_host(host)
+            if host in self._sessions:
+                raise DuplicateSessionError()
+            self._sessions[host] = session
 
     async def remove_session(self, session: Session) -> None:
         """
