@@ -28,11 +28,12 @@ class SessionManager:
         self._sessions: dict[str, Session] = {}
         self._session_lock = Lock()
 
-    def session_by_host(self, host: str) -> Optional[Session]:
+    async def session_by_host(self, host: str) -> Optional[Session]:
         """
         Retrieve a session by its designated host header lookup key
         """
-        return self._sessions.get(sanitize_host(host))
+        async with self._session_lock:
+            return self._sessions.get(sanitize_host(host))
 
     async def register_session_host(self, http_host: str, session: Session):
         """
@@ -44,6 +45,7 @@ class SessionManager:
         async with self._session_lock:
             if host in self._sessions:
                 raise DuplicateSessionError()
+            logger.info(f"Registered host {http_host} for session {session}")
             self._sessions[host] = session
 
     async def remove_session(self, session: Session) -> None:

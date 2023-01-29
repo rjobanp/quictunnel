@@ -1,11 +1,12 @@
-from aioquic.asyncio import serve, QuicConnectionProtocol
-from aioquic.quic.configuration import QuicConfiguration
-from aioquic.quic.events import QuicEvent, ConnectionTerminated, StreamDataReceived
-from aioquic.tls import SessionTicket as TLSSessionTicket
-
 import asyncio
+from typing import Dict, Optional
+
 import structlog
-from typing import Optional, Dict
+from aioquic.asyncio import QuicConnectionProtocol, serve
+from aioquic.quic.configuration import QuicConfiguration
+from aioquic.quic.events import (ConnectionTerminated, QuicEvent,
+                                 StreamDataReceived)
+from aioquic.tls import SessionTicket as TLSSessionTicket
 
 from quictunnel_server.manager import SessionManager
 from quictunnel_server.session import Session
@@ -28,8 +29,8 @@ class QuicTunnelProtocol(QuicConnectionProtocol):
 
     async def register_tunnel_host(self, http_host: str, session: Session):
         """
-        Callback to pass to a Session to allow it to register a new tunnel
-        by http_host once it receives the initialization from the client
+        Callback to pass to a Session to allow it to register itself as the
+        handler for the specified http_host
         """
         await self.session_manager.register_session_host(http_host, session)
 
